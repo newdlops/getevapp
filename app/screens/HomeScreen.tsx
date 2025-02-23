@@ -68,7 +68,7 @@ const HomeScreen: React.FC = () => {
           )}
         </View>
       )}
-      keyExtractor={item => item}></FlatList>
+      keyExtractor={(item: any, index) => item}></FlatList>
   );
 };
 
