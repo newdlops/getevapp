@@ -1,6 +1,8 @@
 // app/index.js
 import React from 'react';
 import App from './App';
+import { Provider } from 'react-redux';
+import {store} from './store/store';
 
 // 여기서 추가적으로 초기화 로직이나 HOC를 감싸는 작업 등을 할 수 있습니다.
 // 예: ErrorBoundary, PerfLogger, Sentry.init() 등
@@ -14,5 +16,5 @@ export default function AppEntryPoint() {
   //   </ErrorBoundary>
   // );
 
-  return <App />;
+  return <Provider store={store}><App /></Provider>;
 }

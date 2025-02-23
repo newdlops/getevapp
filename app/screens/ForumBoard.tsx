@@ -1,6 +1,7 @@
 // ForumBoard.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, TextInput } from 'react-native';
+import { useSelector } from 'react-redux';
 
 // 게시글 컴포넌트
 const Post = ({ post, onPress }) => (
@@ -107,7 +108,7 @@ const PostDetail = ({ post, onClose }) => {
 };
 
 // 메인 포럼 보드 컴포넌트
-const ForumBoard = () => {
+const ForumBoard = ({navigation}) => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [posts] = useState([
     {
@@ -137,6 +138,16 @@ const ForumBoard = () => {
     },
     // 더미 데이터...
   ]);
+
+  const token = useSelector((state) => state.auth.token);
+
+  useEffect(() => {
+    console.log(token)
+    if (!token) {
+      // 로그인하지 않은 경우 LoginScreen으로 이동
+      navigation.navigate('AuthStack');
+    }
+  }, [token]);
 
   return (
     <View style={styles.container}>

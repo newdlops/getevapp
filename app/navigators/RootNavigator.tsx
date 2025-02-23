@@ -19,13 +19,10 @@ const RootNavigator = () => {
     <SafeAreaView style={{flex:1}}>
       <NavigationContainer>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {true ? (
-            // 로그인이 되어 있다면 메인 탭으로
-            <Stack.Screen name="MainTab" component={MainTabNavigator} />
-          ) : (
-            // 로그인이 안 되어 있다면 AuthStack으로
-            <Stack.Screen name="AuthStack" component={AuthStack} />
-          )}
+          {/* 로그인이 되어 있다면 메인 탭으로*/}
+          <Stack.Screen name="MainTab" component={MainTabNavigator} />
+          {/* 로그인이 안 되어 있다면 AuthStack으로*/}
+          <Stack.Screen name="AuthStack" component={AuthStack} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaView>
