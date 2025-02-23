@@ -5,9 +5,10 @@ import {Text} from 'react-native';
 
 import HomeScreen from '../screens/HomeScreen';
 import AlarmSettingScreen from '../screens/AlarmSettingScreen';
-import ForumScreen from '../screens/ForumScreen.tsx';
+import ForumBoard from '../screens/ForumBoard.tsx';
 import MyAccountScreen from '../screens/MyAccountScreen.tsx';
 import FavoriteGoodsScreen from '../screens/FavoriteGoodsScreen.tsx';
+import SearchHeader from './headers/SearchHeader.tsx';
 
 const Tab = createBottomTabNavigator();
 
@@ -86,8 +87,8 @@ const MainTabNavigator = () => {
           return <Text style={{color: 'white', fontSize: 20, fontWeight: 'bold'}}>{labelName}</Text>;
         }
       })}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Forum" component={ForumScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{headerShown: true, header: SearchHeader}}/>
+      <Tab.Screen name="Forum" component={ForumBoard} />
       <Tab.Screen name="FavoriteGoods" component={FavoriteGoodsScreen} />
       <Tab.Screen name="AlarmSetting" component={AlarmSettingScreen} />
       <Tab.Screen name="MyAccount" component={MyAccountScreen} />
