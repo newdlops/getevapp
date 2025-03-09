@@ -8,12 +8,12 @@ import {
   StyleSheet,
   SafeAreaView,
   KeyboardAvoidingView,
-  Platform,
+  Platform, Button,
 } from 'react-native';
 import { useLoginMutation } from '../api/auth/authApi.ts';
 import {useDispatch} from 'react-redux';
 import {setCredentials} from '../store/authSlice.ts';
-
+import NativeKakaoLogin from '../../specs/NativeKakaoLogin.ts';
 // 로고 이미지 예시 (로컬 이미지라면 require로 불러오기)
 // import logoImage from '../assets/logo.png';
 
@@ -36,6 +36,15 @@ const LoginScreen = ({ navigation }) => {
     }
   };
 
+  const clickTest = () => {
+    // eslint-disable-next-line no-alert
+    NativeKakaoLogin?.loginWithKakaoTalk();
+  };
+  const clickTest2 = () => {
+    // eslint-disable-next-line no-alert
+    console.log('hash:'+NativeKakaoLogin?.loginWithNewScope());
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
@@ -52,6 +61,8 @@ const LoginScreen = ({ navigation }) => {
             style={styles.logo}
           />
           <Text style={styles.title}>My Awesome App</Text>
+          <Button title={"test"} onPress={clickTest}></Button>
+          <Button title={"test2"} onPress={clickTest2}></Button>
         </View>
 
         {/* 로그인 폼 */}

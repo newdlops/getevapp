@@ -9,6 +9,14 @@
     "start": "react-native start",
     "test": "jest"
   },
+  "codegenConfig": {
+    "name": "NativeSpecs",
+    "type": "modules",
+    "jsSrcsDir": "specs",
+    "android": {
+      "javaPackageName": "com.nativespecs"
+    }
+  },
   "dependencies": {
     "@react-native-vector-icons/common": "^11.0.0",
     "@react-native-vector-icons/fontawesome5": "^5.15.4",
