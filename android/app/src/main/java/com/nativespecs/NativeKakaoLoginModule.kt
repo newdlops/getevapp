@@ -2,39 +2,61 @@ package com.nativespecs
 
 import android.content.Context
 import android.util.Log
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.kakao.sdk.common.util.Utility
 import com.kakao.sdk.user.UserApiClient
+import java.text.SimpleDateFormat
+import java.util.Date
 
 
 class NativeKakaoLoginModule(reactApplicationContext: ReactApplicationContext) : NativeKakaoLoginSpec(reactApplicationContext) {
-  var TAG = "내정보"
+  var TAG = "카카오톡"
+
+  private fun dateFormat(date: Date?): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+    return sdf.format(date)
+  }
+
+  private fun loginKakao(context: Context, promise: Promise) {
+    UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
+
+      if (error != null) {
+        Log.e(TAG,"로그인실패" + error)
+        promise.reject(error)
+      }
+      else if (token != null) {
+        Log.i(TAG,"로그인성공" + token)
+        val map = Arguments.createMap()
+        val scope = Arguments.createArray()
+        token.scopes?.map{ scope.pushString(it) }
+        map.putString("accessToken", token.accessToken)
+        map.putString("accessTokenExpiresAt", dateFormat(token.accessTokenExpiresAt))
+        map.putString("refreshToken", token.refreshToken)
+        map.putString("refreshTokenExpiresAt", dateFormat(token.refreshTokenExpiresAt))
+        map.putArray("scopes", scope)
+
+        promise.resolve(map)
+      }
+    }
+  }
+
   override fun getName() = NAME
 
   override fun isKakaoTalkLoginAvailable(): Boolean {
     return UserApiClient.instance.isKakaoTalkLoginAvailable(reactApplicationContext)
   }
 
-  override fun loginWithKakaoTalk(): Boolean {
+  override fun loginWithKakaoTalk(promise: Promise): Unit {
     val currentActivity = currentActivity
 
     // 현재 액티비티가 있다면 해당 컨텍스트 사용, 없으면 기본 컨텍스트에 FLAG 추가
     val context: Context = if ((currentActivity != null)) currentActivity else reactApplicationContext
-
-    var isLogged = UserApiClient.instance.loginWithKakaoTalk(context) { token, error ->
-
-      if (error != null) {
-        Log.i("태그다","로그인실패" + error)
-      }
-      else if (token != null) {
-        Log.i("태그다","로그인성공" + token)
-      }
-    }
-    Log.i("태그다","로그인동작" + isLogged)
-    return true
+    loginKakao(context, promise)
   }
 
-  override fun loginWithNewScope(): Boolean {
+  override fun loginWithNewScope(promise: Promise): Unit {
     val currentActivity = currentActivity
 
     // 현재 액티비티가 있다면 해당 컨텍스트 사용, 없으면 기본 컨텍스트에 FLAG 추가
@@ -43,9 +65,10 @@ class NativeKakaoLoginModule(reactApplicationContext: ReactApplicationContext) :
     UserApiClient.instance.me { user, error ->
       if (error != null) {
         Log.e(TAG, "사용자 정보 요청 실패", error)
+        promise.reject(error)
       }
       else if (user != null) {
-        Log.e(TAG, "사용자 정보 요청 성공 ${user}")
+        Log.i(TAG, "사용자 정보 요청 성공 ${user}")
         var scopes = mutableListOf<String>()
 
         if (user.kakaoAccount?.emailNeedsAgreement == true) { scopes.add("account_email") }
@@ -68,24 +91,21 @@ class NativeKakaoLoginModule(reactApplicationContext: ReactApplicationContext) :
           UserApiClient.instance.loginWithNewScopes(context, scopes) { token, error ->
             if (error != null) {
               Log.e(TAG, "사용자 추가 동의 실패", error)
+              promise.reject(error)
             } else {
               Log.d(TAG, "사용자 추가 동의 성공: ${token!!.scopes}")
 
-              // 사용자 정보 재요청
-              UserApiClient.instance.me { user, error ->
-                if (error != null) {
-                  Log.e(TAG, "사용자 정보 요청 실패", error)
-                }
-                else if (user != null) {
-                  Log.i(TAG, "사용자 정보 요청 성공: ${user}")
-                }
-              }
+              // 로그인 재요청
+              loginKakao(context, promise)
+
             }
           }
+        } else {
+          // 동의항목이 없으면 그대로 로그인
+          loginKakao(context, promise)
         }
       }
     }
-    return true
   }
 
   override fun getHash(): String {

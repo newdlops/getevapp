@@ -28,7 +28,7 @@
 
         <data
           android:host="oauth"
-          android:scheme="" />
+          android:scheme="kakaobb3f61d20a648f814f967c69df9f3b84" />
       </intent-filter>
     </activity>
     <activity
@@ -43,7 +43,7 @@
         <!-- Redirect URI: "kakao${NATIVE_APP_KEY}://oauth" -->
         <data
           android:host="oauth"
-          android:scheme="" />
+          android:scheme="kakaobb3f61d20a648f814f967c69df9f3b84" />
       </intent-filter>
     </activity>
   </application>

@@ -1,33 +1,35 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
-  View,
-  Text,
+  Button,
   Image,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform, Button,
+  View,
 } from 'react-native';
-import { useLoginMutation } from '../api/auth/authApi.ts';
+import {useLoginMutation} from '../api/auth/authApi.ts';
 import {useDispatch} from 'react-redux';
 import {setCredentials} from '../store/authSlice.ts';
 import NativeKakaoLogin from '../../specs/NativeKakaoLogin.ts';
+import axios from 'axios';
 // 로고 이미지 예시 (로컬 이미지라면 require로 불러오기)
 // import logoImage from '../assets/logo.png';
 
-const LoginScreen = ({ navigation }) => {
+const LoginScreen = ({navigation}) => {
   // 로그인 입력값 상태
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [login, { isLoading, error }] = useLoginMutation();
+  const [login, {isLoading, error}] = useLoginMutation();
   const dispatch = useDispatch();
 
   // 로그인 버튼 클릭 시 처리
   const handleLogin = async () => {
     try {
-      const result = await login({ email, password }).unwrap();
+      const result = await login({email, password}).unwrap();
       dispatch(setCredentials(result));
       // 로그인 후 메인 화면으로 이동
       navigation.navigate('Main');
@@ -38,19 +40,56 @@ const LoginScreen = ({ navigation }) => {
 
   const clickTest = () => {
     // eslint-disable-next-line no-alert
-    NativeKakaoLogin?.loginWithKakaoTalk();
+    NativeKakaoLogin?.loginWithKakaoTalk()
+      .then(r => {
+        console.log('로그인 결과', r);
+
+        axios
+          .post('http://192.168.7.30:8000/api/kakaologin/', {
+            access_token: r.accessToken,
+            refresh_token: r.refreshToken,
+          })
+          .then(response => {
+            console.log(response);
+            alert('로그인 성공');
+          })
+          .catch(_ => {
+            navigation.navigate('Signup');
+          });
+      })
+      .catch(error => {
+        console.error('에러', error);
+      });
   };
   const clickTest2 = () => {
     // eslint-disable-next-line no-alert
-    console.log('hash:'+NativeKakaoLogin?.loginWithNewScope());
+    NativeKakaoLogin?.loginWithNewScope()
+      .then(r => {
+        console.log('로그인 결과', r);
+
+        axios
+          .post('http://192.168.7.30:8000/api/kakaologin/', {
+            access_token: r.accessToken,
+            refresh_token: r.refreshToken,
+          })
+          .then(response => {
+            console.log(response);
+            alert('로그인 성공');
+          })
+          .catch(_ => {
+            navigation.navigate('Signup');
+          });
+      })
+      .catch(error => {
+        console.error('에러', error);
+      });
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {/* 로고 + 타이틀 */}
         <View style={styles.logoContainer}>
           <Image
@@ -61,8 +100,12 @@ const LoginScreen = ({ navigation }) => {
             style={styles.logo}
           />
           <Text style={styles.title}>My Awesome App</Text>
-          <Button title={"test"} onPress={clickTest}></Button>
-          <Button title={"test2"} onPress={clickTest2}></Button>
+          <Button
+            title={'카카오톡 로그인 버튼(테스트용)'}
+            onPress={clickTest}></Button>
+          <Button
+            title={'카카오톡 세부항목 동의 로그인(테스트용)'}
+            onPress={clickTest2}></Button>
         </View>
 
         {/* 로그인 폼 */}
@@ -140,7 +183,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2, // 안드로이드 그림자

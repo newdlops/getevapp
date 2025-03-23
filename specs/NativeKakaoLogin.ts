@@ -3,8 +3,8 @@ import {TurboModuleRegistry} from 'react-native';
 
 export interface Spec extends TurboModule {
   isKakaoTalkLoginAvailable(): boolean;
-  loginWithKakaoTalk(): boolean;
-  loginWithNewScope(): boolean;
+  loginWithKakaoTalk(): Promise<any>;
+  loginWithNewScope(): Promise<any>;
   getHash(): string;
 }
 
