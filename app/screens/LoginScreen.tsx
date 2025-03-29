@@ -11,9 +11,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import {useLoginMutation} from '../api/auth/authApi.ts';
-import {useDispatch} from 'react-redux';
-import {setCredentials} from '../store/authSlice.ts';
+import {useKakaoLoginMutation} from '../api/auth/authApi.ts';
+import {useDispatch, useSelector} from 'react-redux';
+import {selectCurrentUser, setCredentials} from '../store/authSlice.ts';
 import NativeKakaoLogin from '../../specs/NativeKakaoLogin.ts';
 import axios from 'axios';
 // 로고 이미지 예시 (로컬 이미지라면 require로 불러오기)
@@ -23,66 +23,30 @@ const LoginScreen = ({navigation}) => {
   // 로그인 입력값 상태
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [login, {isLoading, error}] = useLoginMutation();
+  const [login, {isLoading, error}] = useKakaoLoginMutation();
+  const currentUser = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
 
-  // 로그인 버튼 클릭 시 처리
-  const handleLogin = async () => {
+  const clickTest = async () => {
+    // eslint-disable-next-line no-alert
     try {
-      const result = await login({email, password}).unwrap();
-      dispatch(setCredentials(result));
-      // 로그인 후 메인 화면으로 이동
-      navigation.navigate('Main');
-    } catch (err) {
-      console.log('로그인 에러:', err);
+      // 로그인 API 호출, unwrap()을 사용하여 성공/실패를 명시적으로 처리
+      const kakaologinresult = await NativeKakaoLogin?.loginWithNewScope();
+      console.log('카카오로그인 결과', kakaologinresult);
+
+      const result = await login({
+        access_token: kakaologinresult.accessToken,
+        refresh_token: kakaologinresult.refreshToken,
+      }).unwrap();
+      // 로그인 성공: 스토어에 토큰 저장 후 대시보드 화면으로 이동
+      dispatch(setCredentials({...result, isLogged: true}));
+      console.log('로그인 성공', result, currentUser);
+      navigation.goBack();
+    } catch (error) {
+      console.log('로그인 실패', error);
+      // 로그인 실패: 회원가입 화면으로 이동
+      navigation.navigate('Signup');
     }
-  };
-
-  const clickTest = () => {
-    // eslint-disable-next-line no-alert
-    NativeKakaoLogin?.loginWithKakaoTalk()
-      .then(r => {
-        console.log('로그인 결과', r);
-
-        axios
-          .post('http://192.168.7.30:8000/api/kakaologin/', {
-            access_token: r.accessToken,
-            refresh_token: r.refreshToken,
-          })
-          .then(response => {
-            console.log(response);
-            alert('로그인 성공');
-          })
-          .catch(_ => {
-            navigation.navigate('Signup');
-          });
-      })
-      .catch(error => {
-        console.error('에러', error);
-      });
-  };
-  const clickTest2 = () => {
-    // eslint-disable-next-line no-alert
-    NativeKakaoLogin?.loginWithNewScope()
-      .then(r => {
-        console.log('로그인 결과', r);
-
-        axios
-          .post('http://192.168.7.30:8000/api/kakaologin/', {
-            access_token: r.accessToken,
-            refresh_token: r.refreshToken,
-          })
-          .then(response => {
-            console.log(response);
-            alert('로그인 성공');
-          })
-          .catch(_ => {
-            navigation.navigate('Signup');
-          });
-      })
-      .catch(error => {
-        console.error('에러', error);
-      });
   };
 
   return (
@@ -90,57 +54,16 @@ const LoginScreen = ({navigation}) => {
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        {/* 로고 + 타이틀 */}
-        <View style={styles.logoContainer}>
-          <Image
-            // 실제 로컬 이미지 사용 시: source={logoImage}
-            source={{
-              uri: 'https://via.placeholder.com/150/cccccc?text=App+Logo',
-            }}
-            style={styles.logo}
-          />
-          <Text style={styles.title}>My Awesome App</Text>
-          <Button
-            title={'카카오톡 로그인 버튼(테스트용)'}
-            onPress={clickTest}></Button>
-          <Button
-            title={'카카오톡 세부항목 동의 로그인(테스트용)'}
-            onPress={clickTest2}></Button>
-        </View>
+        <View style={styles.container}>
+          <Text style={styles.title}>핫딜모아</Text>
 
-        {/* 로그인 폼 */}
-        <View style={styles.formContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="이메일"
-            placeholderTextColor="#aaa"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="비밀번호"
-            placeholderTextColor="#aaa"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-            <Text style={styles.loginButtonText}>로그인</Text>
+          <TouchableOpacity style={styles.kakaoButton} onPress={clickTest}>
+            <Image
+              source={{ uri: 'https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png' }}
+              style={styles.kakaoIcon}
+            />
+            <Text style={styles.kakaoText}>카카오톡으로 로그인</Text>
           </TouchableOpacity>
-
-          {/* 회원가입 / 비밀번호 찾기 링크 영역 */}
-          <View style={styles.footerLinks}>
-            <TouchableOpacity onPress={() => console.log('회원가입')}>
-              <Text style={styles.linkText}>회원가입</Text>
-            </TouchableOpacity>
-            <Text style={styles.separator}> | </Text>
-            <TouchableOpacity onPress={() => console.log('비밀번호 찾기')}>
-              <Text style={styles.linkText}>비밀번호 찾기</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -156,71 +79,33 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 24,
+    backgroundColor: '#F5F3FF', // 연한 보라 배경
     justifyContent: 'center',
-  },
-  // 로고와 타이틀
-  logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
-  },
-  logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 16,
-    borderRadius: 16,
-    resizeMode: 'cover',
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 22,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#6B21A8', // 진한 보라색
+    marginBottom: 60,
   },
-  // 폼
-  formContainer: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2, // 안드로이드 그림자
-  },
-  input: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    fontSize: 16,
-    color: '#333',
-    paddingVertical: 8,
-    marginBottom: 16,
-  },
-  loginButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 12,
-    borderRadius: 4,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  loginButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  // 하단 링크
-  footerLinks: {
+  kakaoButton: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 16,
+    alignItems: 'center',
+    backgroundColor: '#FEE500',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
-  linkText: {
-    fontSize: 14,
-    color: '#4CAF50',
+  kakaoIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
   },
-  separator: {
-    fontSize: 14,
-    color: '#999',
-    marginHorizontal: 8,
+  kakaoText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#3C1E1E',
   },
 });

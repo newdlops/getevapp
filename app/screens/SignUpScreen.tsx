@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Button, TouchableOpacity } from 'react-native';
 import NativeKakaoLogin from '../../specs/NativeKakaoLogin.ts';
-import axios from 'axios';
+import { useKakaoSignupMutation} from '../api/auth/authApi.ts';
+import {setCredentials} from '../store/authSlice.ts';
+import {useDispatch, useSelector} from 'react-redux';
 
 const CustomCheckBox = ({ value, onValueChange }) => {
   return (
@@ -15,31 +17,31 @@ const CustomCheckBox = ({ value, onValueChange }) => {
 
 const SignUpScreen = ({navigation }) => {
   const [isChecked, setIsChecked] = useState(false);
+  const [signup, {isLoading, error}] = useKakaoSignupMutation();
+  const dispatch = useDispatch();
 
-  const signUp = () => {
+  const signUp = async () => {
     // eslint-disable-next-line no-alert
     // TODO: 회원가입을 누르면 kakaoId와 유저 Email을 받을수 있는데 이걸로 유저 계정을 생성해야 한다.
-    NativeKakaoLogin?.loginWithNewScope()
-    .then(r => {
-      console.log('로그인 결과', r);
+    try {
 
-      axios
-      .post('http://192.168.7.30:8000/api/kakaosignup/', {
-        access_token: r.accessToken,
-        refresh_token: r.refreshToken,
-      })
-      .then(response => {
-        console.log(response);
-        alert('회원가입 성공');
-      })
-      .catch(_ => {
-        console.log(_);
-        alert('회원가입 실패');
-      });
-    })
-    .catch(error => {
-      console.error('에러', error);
-    });
+      const kakaoinfo = await NativeKakaoLogin?.loginWithNewScope();
+      console.log('카카오 가입용 로그인 정보', kakaoinfo);
+      // 로그인 API 호출, unwrap()을 사용하여 성공/실패를 명시적으로 처리
+      const result = await signup({
+        access_token: kakaoinfo.accessToken,
+        refresh_token: kakaoinfo.refreshToken,
+      }).unwrap();
+      // 로그인 성공: 스토어에 토큰 저장 후 대시보드 화면으로 이동
+      dispatch(setCredentials(result));
+      navigation.goBack();
+      alert('회원등록 성공');
+    } catch (error) {
+      console.log(error);
+      alert('회원등록 실패');
+      // 로그인 실패: 회원가입 화면으로 이동
+    }
+
   };
 
   return (
@@ -80,6 +82,16 @@ const SignUpScreen = ({navigation }) => {
           signUp();
         }}
         disabled={!isChecked}
+        color="#007BFF"
+      />
+      <View style={{height:10}}></View>
+      <Button
+        title="취소"
+        onPress={() => {
+          // 회원가입 처리 로직 추가
+          // alert('회원가입 버튼 클릭됨!');
+          navigation.goBack();
+        }}
         color="#007BFF"
       />
     </View>

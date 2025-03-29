@@ -65,7 +65,8 @@ class NativeKakaoLoginModule(reactApplicationContext: ReactApplicationContext) :
     UserApiClient.instance.me { user, error ->
       if (error != null) {
         Log.e(TAG, "사용자 정보 요청 실패", error)
-        promise.reject(error)
+        // 정보가 없으면 로그인을 재요청합니다.
+        loginKakao(context, promise)
       }
       else if (user != null) {
         Log.i(TAG, "사용자 정보 요청 성공 ${user}")
@@ -104,6 +105,24 @@ class NativeKakaoLoginModule(reactApplicationContext: ReactApplicationContext) :
           // 동의항목이 없으면 그대로 로그인
           loginKakao(context, promise)
         }
+      }
+    }
+  }
+
+  override fun logout(promise: Promise) {
+    UserApiClient.instance.logout { error ->
+      if (error != null) {
+        Log.e(TAG, "로그아웃 실패. SDK에서 토큰 삭제됨", error)
+        promise.reject(error)
+      }
+      else {
+        Log.i(TAG, "로그아웃 성공. SDK에서 토큰 삭제됨")
+        val map = Arguments.createMap()
+        map.putString("accessToken", null)
+        map.putString("accessTokenExpiresAt", null)
+        map.putString("refreshToken", null)
+        map.putString("refreshTokenExpiresAt", null)
+        promise.resolve(map)
       }
     }
   }

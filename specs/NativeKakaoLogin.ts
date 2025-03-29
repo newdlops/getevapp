@@ -6,6 +6,7 @@ export interface Spec extends TurboModule {
   loginWithKakaoTalk(): Promise<any>;
   loginWithNewScope(): Promise<any>;
   getHash(): string;
+  logout(): Promise<any>;
 }
 
 export default TurboModuleRegistry.getEnforcing<Spec>(

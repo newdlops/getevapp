@@ -1,9 +1,13 @@
-// slices/authSlice.js
+// src/features/auth/authSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  token: null,
-  user: null,
+  id: null,
+  accessToken: null,
+  refreshToken: null,
+  email: null,
+  userId: null,
+  isLogged: false,
 };
 
 const authSlice = createSlice({
@@ -11,15 +15,29 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setCredentials: (state, action) => {
-      state.token = action.payload.token;
-      state.user = action.payload.user;
+      state.id = action.payload.id;
+      state.accessToken = action.payload.access_token;
+      state.refreshToken = action.payload.refresh_token;
+      state.email = action.payload.email;
+      state.userId = action.payload.user_id;
+      state.isLogged = action.payload.isLogged;
     },
-    logout: (state) => {
-      state.token = null;
-      state.user = null;
+    clearCredentials: (state) => {
+      state.id = null;
+      state.accessToken = null;
+      state.refreshToken = null;
+      state.email = null;
+      state.userId = null;
+      state.isLogged = false;
     },
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, clearCredentials } = authSlice.actions
+
+export const selectCurrentUser = (state) => {
+  return state.auth};
+// 또는 필요한 경우 accessToken만 선택할 수도 있습니다.
+export const selectAccessToken = (state) => state.auth.accessToken;
+
 export default authSlice.reducer;

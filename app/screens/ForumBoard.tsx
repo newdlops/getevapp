@@ -139,15 +139,15 @@ const ForumBoard = ({navigation}) => {
     // 더미 데이터...
   ]);
 
-  const token = useSelector((state) => state.auth.token);
-
-  useEffect(() => {
-    console.log(token)
-    if (!token) {
-      // 로그인하지 않은 경우 LoginScreen으로 이동
-      navigation.navigate('AuthStack');
-    }
-  }, [token]);
+  // const token = useSelector((state) => state.auth.token);
+  //
+  // useEffect(() => {
+  //   console.log(token)
+  //   if (!token) {
+  //     // 로그인하지 않은 경우 LoginScreen으로 이동
+  //     navigation.navigate('AuthStack');
+  //   }
+  // }, [token]);
 
   return (
     <View style={styles.container}>

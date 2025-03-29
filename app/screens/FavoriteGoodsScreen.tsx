@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
+  Button,
   FlatList,
-  StyleSheet
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 // 아이콘 사용을 위해 설치 후 불러와주세요. (예: yarn add react-native-vector-icons)
 // iOS라면 Info.plist, Android라면 gradle 설정 등을 해야 합니다.
 import Icon from '@react-native-vector-icons/ionicons';
+import {useSelector} from 'react-redux';
+import {selectCurrentUser} from '../store/authSlice.ts';
+import {useIsFocused} from '@react-navigation/native';
+import LoginRequest from '../components/LoginRequest.tsx';
 
 // 예시 상품 데이터
 const initialData = [
@@ -17,8 +22,9 @@ const initialData = [
     id: '1',
     title: 'Pull and deer',
     brand: 'Fancy',
-    price: 234.90,
-    imageUri: 'https://image.fmkorea.com/filesn/cache/thumb/20250221/8054942222_70x50.crop.jpg?c=20250221145050',
+    price: 234.9,
+    imageUri:
+      'https://image.fmkorea.com/filesn/cache/thumb/20250221/8054942222_70x50.crop.jpg?c=20250221145050',
     isLiked: false,
   },
   {
@@ -41,7 +47,7 @@ const initialData = [
     id: '4',
     title: 'Brown tight',
     brand: 'Bear',
-    price: 234.90,
+    price: 234.9,
     imageUri: 'https://via.placeholder.com/200x250/B5651D?text=Fashion4',
     isLiked: false,
   },
@@ -63,23 +69,29 @@ const initialData = [
   },
 ];
 
-const FavoriteGoodsScreen = () => {
+const FavoriteGoodsScreen = ({navigation}) => {
   // 상품 목록 상태
   const [products, setProducts] = useState(initialData);
 
+  const currentUser = useSelector(selectCurrentUser);
+  const isFocused = useIsFocused();
+  useEffect(() => {
+    // if (!currentUser.isLogged) navigation.navigate('AuthStack');
+  }, [currentUser, isFocused]);
+
   // 찜하기(좋아요) 상태 토글 함수
-  const toggleLike = (id) => {
+  const toggleLike = id => {
     setProducts(prev =>
       prev.map(item =>
-        item.id === id ? { ...item, isLiked: !item.isLiked } : item
-      )
+        item.id === id ? {...item, isLiked: !item.isLiked} : item,
+      ),
     );
   };
 
   // 개별 상품 카드를 렌더링하는 함수
-  const renderItem = ({ item }) => (
+  const renderItem = ({item}) => (
     <View style={styles.cardContainer}>
-      <Image source={{ uri: item.imageUri }} style={styles.productImage} />
+      <Image source={{uri: item.imageUri}} style={styles.productImage} />
 
       <Text style={styles.productTitle}>{item.title}</Text>
       <Text style={styles.productBrand}>{item.brand}</Text>
@@ -88,8 +100,7 @@ const FavoriteGoodsScreen = () => {
       {/* 하트 아이콘 (좋아요 / 해제) */}
       <TouchableOpacity
         style={styles.likeButton}
-        onPress={() => toggleLike(item.id)}
-      >
+        onPress={() => toggleLike(item.id)}>
         <Icon
           name={item.isLiked ? 'heart' : 'heart-outline'}
           size={24}
@@ -99,15 +110,17 @@ const FavoriteGoodsScreen = () => {
     </View>
   );
 
-  return (
+  return currentUser.isLogged ? (
     <FlatList
       data={products}
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item.id}
       renderItem={renderItem}
-      numColumns={2}                // 2열 배치
+      numColumns={2} // 2열 배치
       columnWrapperStyle={styles.row}
       contentContainerStyle={styles.listContainer}
     />
+  ) : (
+    <LoginRequest onLoginPress={()=>navigation.navigate('AuthStack')}></LoginRequest>
   );
 };
 
@@ -129,7 +142,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     // 카드 형태로 보이도록 그림자/섀도우 효과
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2, // 안드로이드 그림자

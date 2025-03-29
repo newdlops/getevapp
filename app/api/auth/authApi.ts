@@ -1,20 +1,32 @@
-import { createApi, fakeBaseQuery } from '@reduxjs/toolkit/query/react';
+// src/services/authApi.js
+import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fakeBaseQuery(),
+  baseQuery: fetchBaseQuery({ baseUrl: 'http://192.168.7.30:8000/api/' }),
   endpoints: (builder) => ({
-    login: builder.mutation({
-      queryFn: async (credentials) => {
-        // 500ms 딜레이로 목업 응답 시뮬레이션
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        if (credentials.username === 'test' && credentials.password === 'password') {
-          return { data: { token: 'fake-token', user: { username: 'test' } } };
-        }
-        return { error: { status: 401, data: 'Invalid credentials' } };
-      },
+    kakaoLogin: builder.mutation({
+      query: (credentials) => ({
+        url: 'kakaologin/',           // 로그인 엔드포인트
+        method: 'POST',
+        body: credentials,      // { email, password } 형식
+      }),
+    }),
+    kakaoSignup: builder.mutation({
+      query: (credentials) => ({
+        url: 'kakaosignup/',
+        method: 'POST',
+        body: credentials,
+      }),
+    }),
+    logout: builder.mutation({
+      query: (credentials) => ({
+        url: 'logout/',
+        method: 'POST',
+        body: credentials,
+      }),
     }),
   }),
 });
 
-export const { useLoginMutation } = authApi;
+export const { useKakaoLoginMutation, useKakaoSignupMutation, useLogoutMutation } = authApi;
