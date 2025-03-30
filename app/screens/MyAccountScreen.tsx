@@ -20,18 +20,23 @@ import LoginRequest from '../components/LoginRequest.tsx';
 
 const MyAccountScreen = ({navigation}) => {
   // 예시로 사용자 아이디와 이메일을 상태로 관리
-  const [userId, setUserId] = useState('mabin');
-  const [email, setEmail] = useState('tymonjm@gmail.com');
+  const [userId, setUserId] = useState(currentUser?.userId??'');
+  const [email, setEmail] = useState(currentUser?.email??'');
   const [logout, {isLoading, error}] = useLogoutMutation();
   const currentUser = useSelector(selectCurrentUser);
   const dispatch = useDispatch();
   const isFocused = useIsFocused();
 
+  useEffect(()=>{
+    setUserId(currentUser.userId);
+    setEmail(currentUser.email);
+  },[currentUser]);
+
 
   // 저장 버튼 클릭 시 수행될 로직
   const handleSave = () => {
     // TODO: 서버에 수정된 아이디/이메일 전달, 혹은 로컬 상태 업데이트 등
-    console.log('저장 버튼 클릭:', {userId, email});
+    console.log('현재 유저', currentUser);
   };
 
   const handleLogout = async () => {
