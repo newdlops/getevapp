@@ -1,5 +1,6 @@
 package com.nativespecs
 
+import androidx.activity.result.ActivityResultLauncher
 import com.facebook.react.BaseReactPackage
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
@@ -9,7 +10,9 @@ import com.facebook.react.uimanager.ViewManager
 
 class RichEditTextPackage: BaseReactPackage() {
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<in Nothing, in Nothing>> {
-    return listOf(RichEditTextManager(reactContext))
+    val manager = RichEditTextManager(reactContext)
+    RichEditTextManagerProvider.manager = manager
+    return listOf(manager)
   }
 
   override fun getModule(name: String, reactContext: ReactApplicationContext): NativeModule? {
@@ -29,5 +32,10 @@ class RichEditTextPackage: BaseReactPackage() {
       true,
     )
     )
+  }
+
+  object RichEditTextManagerProvider {
+    var manager: RichEditTextManager? = null
+    var imageLauncher: ActivityResultLauncher<String>? = null
   }
 }

@@ -3,7 +3,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 export const authApi = createApi({
   reducerPath: 'authApi',
-  baseQuery: fetchBaseQuery({ baseUrl: 'http://192.168.7.30:8000/api/' }),
+  baseQuery: fetchBaseQuery({ baseUrl: 'http://192.168.79.27:8000/api/' }),
   endpoints: (builder) => ({
     kakaoLogin: builder.mutation({
       query: (credentials) => ({

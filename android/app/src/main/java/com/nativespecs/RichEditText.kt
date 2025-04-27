@@ -4,6 +4,9 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Build
 import android.text.*
 import android.text.method.ScrollingMovementMethod
@@ -19,14 +22,26 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.*
+import android.widget.LinearLayout.HORIZONTAL
+import androidx.activity.result.ActivityResultLauncher
+import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.ReactContext
+import com.facebook.react.modules.core.DeviceEventManagerModule
+import com.facebook.react.modules.core.RCTNativeAppEventEmitter
 import com.facebook.react.uimanager.ThemedReactContext
+import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.UIManagerModule
+import com.facebook.react.uimanager.events.EventDispatcher
+import com.facebook.react.uimanager.events.RCTEventEmitter
+import com.facebook.react.uimanager.events.RCTModernEventEmitter
 import com.getevapp.R
 
 class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(context, attrs) {
 
-  private val editTextScroll: ScrollView
-  private val editText: EditText
+  val editText: EditText
   private val htmlPreview: TextView
   private val styleToolbar: LinearLayout
   private val stylePopup: PopupWindow
@@ -40,17 +55,21 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
   private var initialTouchY = 0f
   private var initialWidth = 0
   private var initialHeight = 0
+  var imageLauncher: ActivityResultLauncher<String>? = null
 
+  private var gradientDrawable: GradientDrawable = GradientDrawable()
 
   init {
     orientation = VERTICAL
-    setPadding(24, 120, 24, 24)
-    setBackgroundColor(Color.RED)
-    editTextScroll = createScrollView()
+    gravity = Gravity.START
     styleToolbar = createStyleToolbar()
     editText = createEditText()
     htmlPreview = createHtmlPreview()
 
+    layoutParams = LayoutParams(MATCH_PARENT, 300)
+
+
+    background = gradientDrawable
     val saveBtn = createButton("저장하기") { saveHtml() }
     val loadBtn = createButton("불러오기") { loadHtmlSample() }
 
@@ -65,14 +84,43 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
       isFocusable = false
     }
 
-//    addView(editTextScroll)
     addView(editText)
-    addView(saveBtn)
-    addView(loadBtn)
-    addView(htmlPreview)
+//    addView(saveBtn)
+//    addView(loadBtn)
+//    addView(htmlPreview)
     observeKeyboardHeight()
   }
 
+  fun applyExtraStyle(style: ExtraStyle) {
+    this.setBackgroundColor(style.backgroundColor)
+    this.setPadding(
+      style.resolvedPaddingLeft,
+      style.resolvedPaddingTop,
+      style.resolvedPaddingRight,
+      style.resolvedPaddingBottom
+    )
+
+    val density = resources.displayMetrics.density
+
+    // GradientDrawable을 새로 생성해서 배경 및 테두리 스타일 적용
+    gradientDrawable.apply {
+      // 배경색 적용
+      setColor(style.backgroundColor)
+      // borderWidth와 borderColor가 모두 있을 때 테두리 적용
+      setStroke(style.borderWidth * density.toInt(), style.borderColor)
+      // borderRadius가 있을 경우 둥근 모서리 적용
+      style.borderRadius.let { radius ->
+        cornerRadius = radius * density
+      }
+
+    }
+
+    refreshBackGround()
+  }
+
+  private fun refreshBackGround() {
+    background = gradientDrawable
+  }
   // ----------------------------
   // Component creation helpers
   // ----------------------------
@@ -80,10 +128,11 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
   private fun createEditText(): EditText {
     return EditText(context).apply {
       layoutParams = ViewGroup.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.WRAP_CONTENT
+        MATCH_PARENT,
+        WRAP_CONTENT
       )
-      gravity = Gravity.TOP or Gravity.START
+      gravity = Gravity.CENTER_VERTICAL
+
       hint = "내용을 입력하세요"
       inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
       isVerticalScrollBarEnabled = true
@@ -92,8 +141,8 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
       movementMethod = ScrollingMovementMethod.getInstance()
       setLines(10)
       maxLines = 10
-      minLines = 5
-
+      minLines = 1
+      minHeight = 100
       // 선택 모드 되도록
       isFocusable = true
       isFocusableInTouchMode = true
@@ -106,7 +155,7 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
       setHorizontallyScrolling(false)
 
       setOnFocusChangeListener { _, hasFocus ->
-        if(hasFocus){
+        if (hasFocus) {
           hasEditTextFocus = true
           styleToolbar.visibility = VISIBLE
           Log.d("RichEdit", "Focus")
@@ -125,7 +174,7 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
         val offset = editText.getOffsetForPosition(x, y)
         val spannable = editText.text
         val spans = spannable.getSpans(offset, offset, ResizableImageSpan::class.java)
-        if(spans.isNotEmpty()) {
+        if (spans.isNotEmpty()) {
           when (event.action) {
             MotionEvent.ACTION_DOWN -> {
               if (spans.isNotEmpty()) {
@@ -191,6 +240,16 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
         false
       }
 
+      addTextChangedListener(object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+          s?.let { dispatchTextChangeEvent(it.toString()) }
+        }
+        override fun afterTextChanged(s: Editable?) {
+          updateHtmlPreview()
+        }
+      })
+
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         customInsertionActionModeCallback = object : ActionMode.Callback {
           override fun onCreateActionMode(mode: ActionMode?, menu: Menu?): Boolean = false
@@ -200,6 +259,15 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
         }
       }
     }
+  }
+
+  private fun dispatchTextChangeEvent(text: String) {
+    val html = Html.toHtml(editText.text, Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL)
+
+    val reactContext = context as ReactContext
+    val surfaceId = UIManagerHelper.getSurfaceId(reactContext)
+    val dispatcher = UIManagerHelper.getEventDispatcherForReactTag(reactContext, id)
+    dispatcher?.dispatchEvent(TextChangeEvent(surfaceId, id, html))
   }
 
   private fun createStyleToolbar(): LinearLayout {
@@ -227,7 +295,11 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
 
       addView(createIconButton(R.drawable.ic_image) {
         try {
-          insertImage(R.drawable.a)
+          if (imageLauncher == null) {
+            Log.e("RichEdit", "이미지 런처가 없습니다.")
+          } else {
+            imageLauncher?.launch("image/*")
+          }
         } catch (e: Exception) {
           Log.e("RichEditText", "❌ insertImage failed: ${e.message}")
         }
@@ -254,15 +326,6 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
     }
   }
 
-  private fun createScrollView(): ScrollView {
-    return ScrollView(context).apply {
-      layoutParams = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.WRAP_CONTENT,
-        1f
-      )
-    }
-  }
   // ----------------------------
   // Span toggling
   // ----------------------------
@@ -326,7 +389,7 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
       if (keypadHeight > screenHeight * 0.15) {
         // Keyboard opened
         Log.d("RichEdit", "keyboard Open")
-        if(hasEditTextFocus){
+        if (hasEditTextFocus) {
           showPopupIfNeeded(keypadHeight)
           Log.d("RichEdit", "keypadHeight $keypadHeight")
           styleToolbar.visibility = VISIBLE
@@ -373,12 +436,36 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
     }
   }
 
-  private fun insertImage(drawableResId: Int) {
-    val drawable = context.getDrawable(drawableResId) ?: return
-    drawable.setBounds(0, 0, 100, 100) // 크기 100x100
+//  private fun insertImage(drawableResId: Int) {
+//    val drawable = context.getDrawable(drawableResId) ?: return
+//    drawable.setBounds(0, 0, 100, 100) // 크기 100x100
+//
+//    val imageSpan = ResizableImageSpan(drawable, uri,200, 200)
+//
+//    val spannable = editText.text
+//    val cursorPosition = editText.selectionStart
+//
+//    // 텍스트가 비어있거나 커서가 텍스트 뒤에 있으면 안전하게 처리
+//    if (cursorPosition < 0 || cursorPosition > spannable.length) return
+//
+//    spannable.insert(cursorPosition, "\uFFFC")
+//    spannable.setSpan(
+//      imageSpan,
+//      cursorPosition,
+//      cursorPosition + 1,
+//      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+//    )
+//
+//    updateHtmlPreview() // 미리보기 업데이트
+//  }
 
-    val imageSpan = ResizableImageSpan(drawable, 200, 200)
 
+  fun insertImageFromUri(uri: Uri) {
+    val inputStream = context.contentResolver.openInputStream(uri)
+    val drawable = Drawable.createFromStream(inputStream, uri.toString()) ?: return
+    drawable.setBounds(0, 0, 100, 100)
+
+    val imageSpan = ResizableImageSpan(drawable, uri, 100, 100)
     val spannable = editText.text
     val cursorPosition = editText.selectionStart
 
@@ -393,7 +480,7 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
       Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
     )
 
-    updateHtmlPreview() // 미리보기 업데이트
+    updateHtmlPreview()
   }
 
   private fun getWordBoundaries(text: CharSequence, offset: Int): Pair<Int, Int> {

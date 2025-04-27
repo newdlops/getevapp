@@ -1,15 +1,20 @@
 package com.nativespecs
 
 import android.graphics.*
-import android.text.*
-import android.text.style.ReplacementSpan
 import android.graphics.drawable.Drawable
+import android.net.Uri
+import android.text.style.ImageSpan
 
 class ResizableImageSpan(
-  val drawable: Drawable,
+  val sourceDrawble: Drawable,
+  private val uri: Uri,
   var width: Int,
   var height: Int
-) : ReplacementSpan() {
+) : ImageSpan(
+  sourceDrawble,
+  uri.toString(),
+  ALIGN_BASELINE
+) {
 
   override fun getSize(
     paint: Paint,
@@ -18,7 +23,7 @@ class ResizableImageSpan(
     end: Int,
     fm: Paint.FontMetricsInt?
   ): Int {
-    val rect = drawable.bounds
+    val rect = sourceDrawble.bounds
     if (fm != null) {
       val fontHeight = fm.descent - fm.ascent
       val drHeight = rect.bottom - rect.top
@@ -44,15 +49,26 @@ class ResizableImageSpan(
     bottom: Int,
     paint: Paint
   ) {
-    drawable.setBounds(x.toInt(), top, x.toInt() + width, top + height)
-    drawable.draw(canvas)
+    sourceDrawble.setBounds(x.toInt(), top, x.toInt() + width, top + height)
+    sourceDrawble.draw(canvas)
+  }
+
+  // 그릴 때마다 크기를 재설정
+  override fun getDrawable(): Drawable {
+    return super.getDrawable().apply {
+      setBounds(0, 0, width, height)
+    }
+  }
+
+  override fun getSource(): String {
+    return "${uri.toString()}\" width=\"$width\" height=\"$height"
   }
 
   fun resize(newWidth: Int, newHeight: Int) {
     this.width = newWidth
     this.height = newHeight
-    drawable.setBounds(0, 0, newWidth, newHeight)
-    drawable.invalidateSelf()
+    sourceDrawble.setBounds(0, 0, newWidth, newHeight)
+    sourceDrawble.invalidateSelf()
 
   }
 }
