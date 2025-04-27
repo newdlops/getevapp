@@ -129,7 +129,7 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
     return EditText(context).apply {
       layoutParams = ViewGroup.LayoutParams(
         MATCH_PARENT,
-        WRAP_CONTENT
+        MATCH_PARENT
       )
       gravity = Gravity.CENTER_VERTICAL
 
@@ -139,10 +139,11 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
       overScrollMode = OVER_SCROLL_ALWAYS
       scrollBarStyle = SCROLLBARS_INSIDE_INSET
       movementMethod = ScrollingMovementMethod.getInstance()
-      setLines(10)
       maxLines = 10
       minLines = 1
       minHeight = 100
+      height = 200
+      background = null
       // 선택 모드 되도록
       isFocusable = true
       isFocusableInTouchMode = true
@@ -167,7 +168,9 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
 
       }
 
-      setOnTouchListener { _, event ->
+      setOnTouchListener { v, event ->
+        v.parent.requestDisallowInterceptTouchEvent(true)
+
         val x = event.x
         val y = event.y
 
@@ -220,6 +223,7 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
 
             MotionEvent.ACTION_UP -> {
               // 드래그가 아니라 클릭으로 간주할 정도로 이동이 적었으면 performClick 호출
+              v.parent.requestDisallowInterceptTouchEvent(false)
               if (resizingSpan == null &&
                 Math.abs(x - initialTouchX) < 10 && Math.abs(y - initialTouchY) < 10
               ) {
@@ -435,30 +439,6 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
       }
     }
   }
-
-//  private fun insertImage(drawableResId: Int) {
-//    val drawable = context.getDrawable(drawableResId) ?: return
-//    drawable.setBounds(0, 0, 100, 100) // 크기 100x100
-//
-//    val imageSpan = ResizableImageSpan(drawable, uri,200, 200)
-//
-//    val spannable = editText.text
-//    val cursorPosition = editText.selectionStart
-//
-//    // 텍스트가 비어있거나 커서가 텍스트 뒤에 있으면 안전하게 처리
-//    if (cursorPosition < 0 || cursorPosition > spannable.length) return
-//
-//    spannable.insert(cursorPosition, "\uFFFC")
-//    spannable.setSpan(
-//      imageSpan,
-//      cursorPosition,
-//      cursorPosition + 1,
-//      Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-//    )
-//
-//    updateHtmlPreview() // 미리보기 업데이트
-//  }
-
 
   fun insertImageFromUri(uri: Uri) {
     val inputStream = context.contentResolver.openInputStream(uri)

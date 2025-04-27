@@ -1,5 +1,18 @@
-import React, { useState, useMemo } from 'react';
-import { SafeAreaView, View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
+import React, {useState, useMemo, useEffect} from 'react';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  BackHandler,
+} from 'react-native';
+import PostDetail from '../components/PostDetail.tsx';
+import RichTextEditor from '../../specs/RichTextEditorNativeComponent.ts';
+import RenderHTML from 'react-native-render-html';
 
 export default function ForumBoard() {
   const [postsData, setPostsData] = useState({
@@ -77,11 +90,24 @@ export default function ForumBoard() {
     setView('list');
   };
 
+  useEffect(() => {
+    const onBackPress = () => {
+      if (view !== 'list') {
+        setView('list');
+        return true;   // 뒤로가기 동작을 내가 처리했다 알리기
+      }
+      return false;    // 기본 동작(앱 종료 등) 허용
+    };
+    const subsriptBackhandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subsriptBackhandler.remove();
+  }, [view]);
+
   const renderPost = ({ item }) => (
     <TouchableOpacity style={[styles.postContainer, item.id === 'announce' && styles.pinnedContainer]} onPress={() => selectPost(item.id)}>
       {item.id === 'announce' && <Text style={styles.pinnedLabel}>공지</Text>}
       <Text style={styles.postTitle}>{item.title}</Text>
-      <Text numberOfLines={2} style={styles.postContent}>{item.content}</Text>
+      {/*<Text numberOfLines={2} style={styles.postContent}>{item.content}</Text>*/}
+      <RenderHTML source={{html:item.content}} />
       <View style={styles.metaRow}>
         <Text style={styles.metaText}>작성일: {item.date}</Text>
         <Text style={styles.metaText}>댓글: {item.comments.length}</Text>
@@ -109,54 +135,17 @@ export default function ForumBoard() {
   if (view === 'detail') {
     const post = postsData[selectedPostId];
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.detailHeader}>
-          <TouchableOpacity onPress={() => setView('list')}><Text style={styles.backBtn}>←</Text></TouchableOpacity>
-          <Text style={styles.header}>글 상세 보기</Text>
-        </View>
-        <ScrollView>
-          <View style={styles.postDetail}>
-            <Text style={styles.detailTitle}>{post.title}</Text>
-            <View style={styles.metaRow}>
-              <Text style={styles.metaText}>작성일: {post.date}</Text>
-              <Text style={styles.metaText}>작성자: {post.author}</Text>
-              <Text style={styles.metaText}>조회: {post.views}</Text>
-            </View>
-            <Text style={styles.detailContent}>{post.content}</Text>
-            <View style={styles.commentSection}>
-              <Text style={styles.commentHeader}>댓글 ({post.comments.length})</Text>
-              {post.comments.map((c, idx) => (
-                <View key={idx} style={styles.commentBox}>
-                  <Text style={styles.commentMeta}>{c.author} · {c.time}</Text>
-                  <Text style={styles.commentText}>{c.text}</Text>
-                </View>
-              ))}
-              <View style={styles.commentInputRow}>
-                <TextInput
-                  style={styles.commentInput}
-                  value={newComment}
-                  onChangeText={setNewComment}
-                  placeholder="댓글을 입력하세요"
-                  multiline
-                />
-                <TouchableOpacity style={styles.submitCommentBtn} onPress={submitComment}>
-                  <Text style={styles.submitCommentText}>등록</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+      <PostDetail post={post} />
     );
   }
 
-  // compose view
+  // 글쓰기 화면(오른쪽 하단의 +를 누름)
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.detailHeader}>
-        <TouchableOpacity onPress={() => setView('list')}><Text style={styles.backBtn}>←</Text></TouchableOpacity>
-        <Text style={styles.header}>글 쓰기</Text>
-      </View>
+      {/*<View style={styles.detailHeader}>*/}
+      {/*  <TouchableOpacity onPress={() => setView('list')}><Text style={styles.backBtn}>←</Text></TouchableOpacity>*/}
+      {/*  <Text style={styles.header}>글 쓰기</Text>*/}
+      {/*</View>*/}
       <ScrollView style={styles.composeContainer}>
         <View style={styles.formGroup}>
           <Text style={styles.label}>제목</Text>
@@ -169,13 +158,14 @@ export default function ForumBoard() {
         </View>
         <View style={styles.formGroup}>
           <Text style={styles.label}>내용</Text>
-          <TextInput
-            style={[styles.input, { height: 200 }]}
-            value={newContent}
-            onChangeText={setNewContent}
-            placeholder="내용을 입력하세요"
-            multiline
-          />
+          {/*<TextInput*/}
+          {/*  style={[styles.input, { height: 200 }]}*/}
+          {/*  value={newContent}*/}
+          {/*  onChangeText={setNewContent}*/}
+          {/*  placeholder="내용을 입력하세요"*/}
+          {/*  multiline*/}
+          {/*/>*/}
+          <RichTextEditor style={[styles.input, { height: 200 }]} height={200} maxLines={100} minHeight={100} onTextChange={e=>setNewContent(e.nativeEvent.text)} />
         </View>
         <View style={styles.buttonGroup}>
           <TouchableOpacity style={styles.cancelBtn} onPress={() => setView('list')}>

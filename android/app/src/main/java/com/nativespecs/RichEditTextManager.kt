@@ -52,6 +52,22 @@ class RichEditTextManager(reactContext: ReactApplicationContext) :
     TODO("Not yet implemented")
   }
 
+  override fun setHeight(view: RichEditText?, value: Int) {
+    view?.editText?.height = value
+  }
+
+  override fun setMaxLines(view: RichEditText?, value: Int) {
+    view?.editText?.maxLines = value
+  }
+
+  override fun setMinHeight(view: RichEditText?, value: Int) {
+    view?.editText?.minHeight = value
+  }
+
+  override fun setMinLines(view: RichEditText?, value: Int) {
+    view?.editText?.minLines = value
+  }
+
   override fun createShadowNodeInstance(): CustomShadowNode {
     Log.d("RichEdit", "createShadowNodeInstance")
     return CustomShadowNode()
