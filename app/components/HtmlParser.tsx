@@ -1,6 +1,9 @@
 import React from 'react';
 import { Text, TextStyle } from 'react-native';
 
+/**
+ * 사용하지 않는 파일이지만 파서 분석을 위해서 남겨둠
+ */
 interface ParsedNode {
   type: 'text' | 'tag';
   tagName?: string;

@@ -61,7 +61,7 @@ class ResizableImageSpan(
   }
 
   override fun getSource(): String {
-    return "${uri.toString()}\" width=\"$width\" height=\"$height"
+    return "${uri.toString()}\" width=\"${(width)}\" height=\"${(height)}\""
   }
 
   fun resize(newWidth: Int, newHeight: Int) {

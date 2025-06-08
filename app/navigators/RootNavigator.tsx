@@ -7,13 +7,11 @@ import AuthStack from './AuthStack';
 import MainTabNavigator from './MainTabNavigator';
 
 // 예시로, 로그인이 되어 있는지 여부를 전역 컨텍스트나 Redux, Recoil 등에서 가져옴
-import { useAuth } from '../hooks/useAuth';
 import {SafeAreaView} from 'react-native';
 
 const Stack = createNativeStackNavigator();
 
 const RootNavigator = () => {
-  const { user } = useAuth(); // user가 null이면 비로그인 상태라고 가정
 
   return (
     <SafeAreaView style={{flex:1}}>

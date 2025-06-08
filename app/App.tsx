@@ -5,7 +5,7 @@ import { DeviceEventEmitter } from 'react-native';
 
 const originalEventEmit = DeviceEventEmitter.emit.bind(DeviceEventEmitter);
 DeviceEventEmitter.emit = (eventName, ...args) => {
-  console.log('[Native->JS]', eventName, ...args);
+  // console.log('[Native->JS]', eventName, ...args);
   return originalEventEmit(eventName, ...args);
 }
 

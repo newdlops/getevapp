@@ -33,11 +33,13 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, clearCredentials } = authSlice.actions
+export const { setCredentials, clearCredentials } = authSlice.actions;
 
-export const selectCurrentUser = (state) => {
-  return state.auth};
+export const selectCurrentUser = (state: {auth: any}) => {
+  return state.auth;
+};
 // 또는 필요한 경우 accessToken만 선택할 수도 있습니다.
-export const selectAccessToken = (state) => state.auth.accessToken;
+export const selectAccessToken = (state: {auth: {accessToken: any}}) =>
+  state.auth.accessToken;
 
 export default authSlice.reducer;

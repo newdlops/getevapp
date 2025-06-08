@@ -1,24 +1,14 @@
 package com.nativespecs
 
 import android.graphics.Color
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.widget.LinearLayout
-import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.common.MapBuilder
 import com.facebook.react.module.annotations.ReactModule
-import com.facebook.react.modules.core.RCTNativeAppEventEmitter
-import com.facebook.react.touch.JSResponderHandler
-import com.facebook.react.uimanager.LayoutShadowNode
 import com.facebook.react.uimanager.ReactStylesDiffMap
 import com.facebook.react.uimanager.SimpleViewManager
-import com.facebook.react.uimanager.StateWrapper
 import com.facebook.react.uimanager.ThemedReactContext
-import com.facebook.react.uimanager.UIManagerHelper
 import com.facebook.react.uimanager.ViewManagerDelegate
-import com.facebook.react.uimanager.events.EventDispatcher
 import com.facebook.react.viewmanagers.RichTextEditorManagerDelegate
 import com.facebook.react.viewmanagers.RichTextEditorManagerInterface
 
@@ -67,17 +57,6 @@ class RichEditTextManager(reactContext: ReactApplicationContext) :
   override fun setMinLines(view: RichEditText?, value: Int) {
     view?.editText?.minLines = value
   }
-
-  override fun createShadowNodeInstance(): CustomShadowNode {
-    Log.d("RichEdit", "createShadowNodeInstance")
-    return CustomShadowNode()
-  }
-
-  override fun getShadowNodeClass(): Class<LayoutShadowNode> {
-    Log.d("RichEdit", "getShadowNodeClass")
-    return CustomShadowNode::class.java as Class<LayoutShadowNode>
-  }
-
 
   override fun updateProperties(viewToUpdate: RichEditText, props: ReactStylesDiffMap?) {
 

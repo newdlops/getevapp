@@ -1,16 +1,35 @@
 import React, {useState} from 'react';
 import {SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import RenderHTML from 'react-native-render-html';
+import {useAddCommentMutation, useGetCommentsQuery} from '../api/commentApi.ts';
+import {formatKoreanDate} from '../utils/dateFormat.ts';
 
 
+export type Post = {
+  id: number;
+  title: string;
+  date: string;
+  author: string;
+  view_count: number;
+  content: string;
+  comments?: {
+    author: string;
+    time: string;
+    text: string;
+  }[];
+};
 
-const PostDetail = ({post}) => {
+const PostDetail = ({post}: {post: Post}) => {
   const [newComment, setNewComment] = useState('');
+  const [addComment, { isLoading: isAddLoading, isSuccess: isAddSuccess, error: addError }] = useAddCommentMutation();
+  const { data: commentList, error, isLoading } = useGetCommentsQuery(post.id);
+  const commentListCheck = () => {
+    console.log(commentList);
+  }
 
-  const submitComment = () => {
+  const submitComment = async () => {
     if (!newComment.trim()) return;
-    const now = new Date();
-    const timestamp = now.toISOString().slice(0, 16).replace('T', ' ');
+    console.log('댓글쓰기', post, newComment);
     // setPostsData(prev => ({
     //   ...prev,
     //   [selectedPostId]: {
@@ -18,8 +37,14 @@ const PostDetail = ({post}) => {
     //     comments: [...prev[selectedPostId].comments, { author: '나', time: timestamp, text: newComment.trim() }]
     //   }
     // }));
+    await addComment({ postId: post.id, content: newComment })
     setNewComment('');
   }
+
+  const v = {img: {
+    resizeMode: 'stretch'
+    }}
+  if(post == null) return <SafeAreaView style={styles.container}><Text>로딩중입니다.</Text></SafeAreaView>
 
   return <SafeAreaView style={styles.container}>
     {/*<View style={styles.detailHeader}>*/}
@@ -30,18 +55,23 @@ const PostDetail = ({post}) => {
       <View style={styles.postDetail}>
         <Text style={styles.detailTitle}>{post.title}</Text>
         <View style={styles.metaRow}>
+          <Text style={styles.metaText}>작성자: {post.user_name}</Text>
+        </View>
+        <View style={styles.metaRow}>
           <Text style={styles.metaText}>작성일: {post.date}</Text>
-          <Text style={styles.metaText}>작성자: {post.author}</Text>
-          <Text style={styles.metaText}>조회: {post.views}</Text>
+          <Text style={styles.metaText}>조회: {post.view_count}</Text>
         </View>
         {/*<Text style={styles.detailContent}>{post.content}</Text>*/}
-        <RenderHTML source={{html:post.content}} />
+        <RenderHTML contentWidth={300} allowedStyles={['width','height']} source={{html:post.content}} tagsStyles={v}/>
+        {/*<TouchableOpacity style={styles.submitCommentBtn} onPress={commentListCheck}>*/}
+        {/*  <Text style={styles.submitCommentText}>댓글확인</Text>*/}
+        {/*</TouchableOpacity>*/}
         <View style={styles.commentSection}>
-          <Text style={styles.commentHeader}>댓글 ({post.comments.length})</Text>
-          {post.comments.map((c, idx) => (
+          <Text style={styles.commentHeader}>댓글 ({commentList?.length})</Text>
+          {commentList?.map((c, idx) => (
             <View key={idx} style={styles.commentBox}>
-              <Text style={styles.commentMeta}>{c.author} · {c.time}</Text>
-              <Text style={styles.commentText}>{c.text}</Text>
+              <Text style={styles.commentMeta}>{c.author} · {formatKoreanDate(c.created_at as string)}</Text>
+              <Text style={styles.commentText}>{c.content}</Text>
             </View>
           ))}
           <View style={styles.commentInputRow}>
@@ -75,7 +105,7 @@ const styles = StyleSheet.create({
   pinnedLabel: { position: 'absolute', top: 12, left: 12, backgroundColor: '#8e44ad', color: '#fff', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, fontSize: 12, fontWeight: 'bold' },
   postTitle: { fontSize: 16, fontWeight: '600', marginBottom: 4, marginLeft: 48 },
   postContent: { fontSize: 14, color: '#555', marginLeft: 48 },
-  metaRow: { flexDirection: 'row', marginLeft: 48, marginTop: 8 },
+  metaRow: { flexDirection: 'row', marginLeft: 12, marginTop: 8 },
   metaText: { fontSize: 12, color: '#777', marginRight: 12 },
   detailHeader: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderColor: '#eee' },
   backBtn: { fontSize: 24, color: '#8e44ad', marginRight: 12 },

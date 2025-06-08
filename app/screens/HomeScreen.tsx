@@ -1,6 +1,5 @@
 import React from 'react';
 import {FlatList, Text, View} from 'react-native';
-import {useAuth} from '../hooks/useAuth';
 import Carousel from 'react-native-reanimated-carousel';
 import {useSharedValue} from 'react-native-reanimated';
 import HotDealBoard from '../components/HotdealBoard.tsx';
@@ -9,7 +8,6 @@ import DealCard from '../components/DealCard.tsx';
 const defaultDataWith6Colors = Array.from({length: 100}, (v, i) => i);
 
 const HomeScreen: React.FC = () => {
-  const {user, logout} = useAuth();
   const scrollOffsetValue = useSharedValue<number>(0);
 
   return (

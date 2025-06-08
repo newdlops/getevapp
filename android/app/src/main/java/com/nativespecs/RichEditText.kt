@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.text.*
 import android.text.method.ScrollingMovementMethod
+import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
 import android.text.style.StrikethroughSpan
 import android.text.style.StyleSpan
@@ -126,6 +127,12 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
   // ----------------------------
 
   private fun createEditText(): EditText {
+    // 스타일 변경을 처리할 람다
+    val spanWatcher = CustomSpanWatcher { spannable ->
+      // 예: 스타일 정보와 텍스트를 저장
+      val styles = spannable.getSpans(0, spannable.length, CharacterStyle::class.java)
+      dispatchTextChangeEvent(spannable.toString())
+    }
     return EditText(context).apply {
       layoutParams = ViewGroup.LayoutParams(
         MATCH_PARENT,
@@ -154,6 +161,15 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
       setSingleLine(false)
       // 이게 없으면 키보드 올라오면 스크롤이 제대로 안 될 수도 있음
       setHorizontallyScrolling(false)
+
+      // 스타일 변경도 감지하도록
+      text.setSpan(
+        spanWatcher,
+        0,
+        this.text.length,
+        Spannable.SPAN_INCLUSIVE_INCLUSIVE
+      )
+
 
       setOnFocusChangeListener { _, hasFocus ->
         if (hasFocus) {
@@ -251,6 +267,12 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
         }
         override fun afterTextChanged(s: Editable?) {
           updateHtmlPreview()
+          s?.setSpan(
+            spanWatcher,
+            0,
+            s.length,
+            Spannable.SPAN_INCLUSIVE_INCLUSIVE
+          )
         }
       })
 
@@ -266,6 +288,7 @@ class RichEditText(context: Context, attrs: AttributeSet?) : LinearLayout(contex
   }
 
   private fun dispatchTextChangeEvent(text: String) {
+    if(editText == null) return
     val html = Html.toHtml(editText.text, Html.TO_HTML_PARAGRAPH_LINES_INDIVIDUAL)
 
     val reactContext = context as ReactContext

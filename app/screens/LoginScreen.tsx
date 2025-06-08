@@ -1,13 +1,11 @@
 import React, {useState} from 'react';
 import {
-  Button,
   Image,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -15,31 +13,41 @@ import {useKakaoLoginMutation} from '../api/auth/authApi.ts';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectCurrentUser, setCredentials} from '../store/authSlice.ts';
 import NativeKakaoLogin from '../../specs/NativeKakaoLogin.ts';
-import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 // 로고 이미지 예시 (로컬 이미지라면 require로 불러오기)
 // import logoImage from '../assets/logo.png';
 
-const LoginScreen = ({navigation}) => {
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type RootStackParamList = {
+  Login: undefined;
+  Signup: undefined;
+};
+
+const LoginScreen = ({navigation}: {navigation: NativeStackNavigationProp<RootStackParamList>}) => {
   // 로그인 입력값 상태
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [login, {isLoading, error}] = useKakaoLoginMutation();
-  const currentUser = useSelector(selectCurrentUser);
+  const currentUser = useSelector<{ auth: unknown }, ReturnType<typeof selectCurrentUser>>(selectCurrentUser);
   const dispatch = useDispatch();
 
   const clickTest = async () => {
     // eslint-disable-next-line no-alert
     try {
       // 로그인 API 호출, unwrap()을 사용하여 성공/실패를 명시적으로 처리
-      const kakaologinresult = await NativeKakaoLogin?.loginWithNewScope();
+      const kakaologinresult = await NativeKakaoLogin?.loginWithNewScope() as { accessToken: string; refreshToken: string };
       console.log('카카오로그인 결과', kakaologinresult);
 
-      const result = await login({
+      const loginArg: { access_token: string; refresh_token: string } = {
         access_token: kakaologinresult.accessToken,
         refresh_token: kakaologinresult.refreshToken,
-      }).unwrap();
+      };
+      const result = await login(loginArg).unwrap() as { access_token: string; refresh_token: string };
       // 로그인 성공: 스토어에 토큰 저장 후 대시보드 화면으로 이동
       dispatch(setCredentials({...result, isLogged: true}));
+      await AsyncStorage.setItem('accessToken', String(result.access_token));
+      await AsyncStorage.setItem('refreshToken', String(result.refresh_token));
       console.log('로그인 성공', result, currentUser);
       navigation.goBack();
     } catch (error) {
@@ -57,7 +65,7 @@ const LoginScreen = ({navigation}) => {
         <View style={styles.container}>
           <Text style={styles.title}>핫딜모아</Text>
 
-          <TouchableOpacity style={styles.kakaoButton} onPress={clickTest}>
+          <TouchableOpacity style={styles.kakaoButton} onPress={() => { void clickTest(); }}>
             <Image
               source={{ uri: 'https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png' }}
               style={styles.kakaoIcon}
