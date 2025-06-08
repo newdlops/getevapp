@@ -14,8 +14,11 @@ import PostDetail from '../components/PostDetail.tsx';
 import RichTextEditor from '../../specs/RichTextEditorNativeComponent.ts';
 import {useAddPostMutation, useGetPostsQuery} from '../api/postApi.ts';
 import {formatKoreanDate} from '../utils/dateFormat.ts';
+import {useSelector} from 'react-redux';
+import {selectCurrentUser} from '../store/authSlice.ts';
+import LoginRequest from '../components/LoginRequest.tsx';
 
-export default function ForumBoard() {
+export default function ForumBoard({navigation}) {
   const { data: postList, error, isLoading } = useGetPostsQuery();
   const [addPost, { isLoading: isAddLoading, isSuccess: isAddSuccess, error: addError }] = useAddPostMutation();
 
@@ -23,7 +26,7 @@ export default function ForumBoard() {
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
-
+  const currentUser = useSelector<{ auth: unknown }, ReturnType<typeof selectCurrentUser>>(selectCurrentUser);
   const postArray = useMemo(() => {
     if(isLoading || postList == null) return [];
     const posts = Object.values(postList);
@@ -43,12 +46,28 @@ export default function ForumBoard() {
     setNewContent('');
     setView('list');
     await addPost({ title: newTitle.trim(), content: newContent.trim()});
-
   };
+  useEffect(() => {
+    if(addError && addError.status === 401) {
+      alert('엑세스 토큰이 만료되었습니다. 로그인해주세요');
+      setView('loginRequest');
+    }
+  }, [addError]);
+  const handleWriteButton = () => {
+    if(!currentUser.isLogged) {
+      alert('현재 로그인된 유저가 아닙니다. 로그인해주세요');
+      setView('loginRequest');
+
+    } else {
+      setView('compose');
+    }
+  }
 
   useEffect(() => {
     const onBackPress = () => {
       if (view !== 'list') {
+        setNewContent('');
+        setNewTitle('');
         setView('list');
         return true;   // 뒤로가기 동작을 내가 처리했다 알리기
       }
@@ -57,6 +76,22 @@ export default function ForumBoard() {
     const subsriptBackhandler = BackHandler.addEventListener('hardwareBackPress', onBackPress);
     return () => subsriptBackhandler.remove();
   }, [view]);
+
+  useEffect(() => {
+    const unsubscribeFocus = navigation.addListener('focus', () => {
+      // 포럼 화면이 포커스될 때 실행할 로직
+    });
+    const unsubscribeBlur = navigation.addListener('blur', () => {
+      // 포럼 화면이 언포커스될 때 실행할 로직
+      setNewContent('');
+      setNewTitle('');
+      setView('list');
+    });
+    return () => {
+      unsubscribeFocus();
+      unsubscribeBlur();
+    };
+  }, [navigation]);
 
   const renderPost = ({item, index}:{item: unknown;index:number}) => (
     <TouchableOpacity
@@ -88,7 +123,7 @@ export default function ForumBoard() {
           keyExtractor={item => item.id}
           renderItem={renderPost}
         />
-        <TouchableOpacity style={styles.fab} onPress={() => setView('compose')}>
+        <TouchableOpacity style={styles.fab} onPress={handleWriteButton}>
           <Text style={styles.fabIcon}>＋</Text>
         </TouchableOpacity>
         {/*<TouchableOpacity style={styles.fab2} onPress={() => console.log(postArray)}>*/}
@@ -103,6 +138,10 @@ export default function ForumBoard() {
     return (
       <PostDetail post={post} />
     );
+  }
+
+  if (view === 'loginRequest') {
+    return <LoginRequest onLoginPress={()=>navigation.navigate('AuthStack')}></LoginRequest>
   }
 
   // 글쓰기 화면(오른쪽 하단의 +를 누름)
@@ -127,7 +166,6 @@ export default function ForumBoard() {
               minHeight={100}
               onTextChange={e => {
                 setNewContent(e.nativeEvent.text);
-                console.log('편집 입력값 => ', e.nativeEvent.text);
               }}
             />
           </View>

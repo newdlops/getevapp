@@ -11,6 +11,7 @@ export type Post = {
   date: string;
   author: string;
   view_count: number;
+  user_name: string;
   content: string;
   comments?: {
     author: string;

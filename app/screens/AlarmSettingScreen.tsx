@@ -1,16 +1,10 @@
 import React from 'react';
 import { View, Text, Button, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import {RichText, Toolbar, useEditorBridge} from '@10play/tentap-editor';
 import RichTextEditor from '../../specs/RichTextEditorNativeComponent.ts';
 
 
 const AlarmSettingScreen: React.FC = () => {
   const [text, setText] = React.useState('Hello, *world*!');
-  const editor = useEditorBridge({
-    autofocus: true,
-    avoidIosKeyboard: true,
-    initialContent: 'Start editing!',
-  });
 
   return (
     <SafeAreaView style={{ flex: 1 }}>

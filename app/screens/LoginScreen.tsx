@@ -26,13 +26,11 @@ type RootStackParamList = {
 
 const LoginScreen = ({navigation}: {navigation: NativeStackNavigationProp<RootStackParamList>}) => {
   // 로그인 입력값 상태
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [login, {isLoading, error}] = useKakaoLoginMutation();
   const currentUser = useSelector<{ auth: unknown }, ReturnType<typeof selectCurrentUser>>(selectCurrentUser);
   const dispatch = useDispatch();
 
-  const clickTest = async () => {
+  const loginRequest = async () => {
     // eslint-disable-next-line no-alert
     try {
       // 로그인 API 호출, unwrap()을 사용하여 성공/실패를 명시적으로 처리
@@ -65,7 +63,7 @@ const LoginScreen = ({navigation}: {navigation: NativeStackNavigationProp<RootSt
         <View style={styles.container}>
           <Text style={styles.title}>핫딜모아</Text>
 
-          <TouchableOpacity style={styles.kakaoButton} onPress={() => { void clickTest(); }}>
+          <TouchableOpacity style={styles.kakaoButton} onPress={() => { void loginRequest(); }}>
             <Image
               source={{ uri: 'https://developers.kakao.com/assets/img/about/logos/kakaolink/kakaolink_btn_medium.png' }}
               style={styles.kakaoIcon}

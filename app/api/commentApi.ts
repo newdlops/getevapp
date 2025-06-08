@@ -1,19 +1,9 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiUrl } from '../appConfig.ts';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import {baseQueryWithReauth} from './postApi.ts';
 
 export const commentApi = createApi({
   reducerPath: 'commentApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${apiUrl}/api/`,
-    prepareHeaders: async (headers) => {
-      const token = await AsyncStorage.getItem('accessToken');
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   tagTypes: ['Comment'],
   endpoints: (builder) => ({
     // 1) 특정 게시글의 댓글 목록 조회

@@ -5,7 +5,8 @@ apply plugin: "com.facebook.react"
 project.ext.react = [
         bundleInDebug: false,
         bundleInRelease: true,
-        entryFile: "index.js"
+        entryFile: "index.js",
+        nodeExecutableAndArgs: ["/usr/local/bin/node"]
 ]
 /**
  * This is the configuration block to customize your React Native Android app.
