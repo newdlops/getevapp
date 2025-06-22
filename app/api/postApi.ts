@@ -22,6 +22,7 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, Fetch
   async (args, api, extraOptions) => {
     // 1) Try original query
     const result = await baseQuery(args, api, extraOptions);
+    console.log('리절트', result);
     // 2) If 401, attempt refresh
     if (result.error?.status === 401) {
       // 일단 로그아웃시킨다.
@@ -46,7 +47,7 @@ export const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, Fetch
   };
 
 export const postApiSlice = createApi({
-  reducerPath: 'api',
+  reducerPath: 'postApi',
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Post'],
   endpoints: builder => ({
