@@ -1,0 +1,102 @@
+name: Dev Deploy (Android APK)
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: dev-deploy-android-apk-main
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.1.12297006"
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Build release APK
+        run: |
+          # Some projects hardcode node path in Gradle; force it to point to setup-node.
+          sudo ln -sf "$(command -v node)" /usr/local/bin/node
+          cd android
+          chmod +x ./gradlew
+          ./gradlew :app:assembleRelease
+
+      - name: Prepare getapp.apk
+        run: |
+          APK_DIR="android/app/build/outputs/apk/release"
+          APK_PATH="$(find "$APK_DIR" -maxdepth 1 -type f -name "*.apk" | head -n 1)"
+          if [ -z "$APK_PATH" ]; then
+            echo "No APK found in: $APK_DIR" >&2
+            exit 1
+          fi
+          cp "$APK_PATH" getapp.apk
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: getapp-apk
+          path: getapp.apk
+          if-no-files-found: error
+          retention-days: 180
+
+      - name: Publish to GitHub Release (dev-latest)
+#        env:
+#          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="dev-latest"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release '$TAG' exists."
+          else
+            gh release create "$TAG" \
+              --title "Dev APK (latest)" \
+              --prerelease \
+              --notes "Automated build from main @ ${GITHUB_SHA}" \
+              --target "${GITHUB_SHA}"
+          fi
+          gh release upload "$TAG" getapp.apk --clobber
+
+      # 태그 푸시일 때만 릴리스 생성/업로드
+      - name: Publish GitHub Release asset
+#        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/apk/getapp.apk
