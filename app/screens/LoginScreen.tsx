@@ -12,7 +12,7 @@ import {
 import {useKakaoLoginMutation} from '../api/auth/authApi.ts';
 import {useDispatch, useSelector} from 'react-redux';
 import {selectCurrentUser, setCredentials} from '../store/authSlice.ts';
-import NativeKakaoLogin from '../../specs/NativeKakaoLogin.ts';
+import NativeKakaoLogin from '../../specs/NativeKakaoLogin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // 로고 이미지 예시 (로컬 이미지라면 require로 불러오기)
 // import logoImage from '../assets/logo.png';

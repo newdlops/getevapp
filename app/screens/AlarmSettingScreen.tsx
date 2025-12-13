@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Button, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
-import RichTextEditor from '../../specs/RichTextEditorNativeComponent.ts';
+import RichTextEditor from '../../specs/RichTextEditorNativeComponent';
 
 
 const AlarmSettingScreen: React.FC = () => {

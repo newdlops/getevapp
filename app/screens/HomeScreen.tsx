@@ -4,29 +4,44 @@ import Carousel from 'react-native-reanimated-carousel';
 import {useSharedValue} from 'react-native-reanimated';
 import HotDealBoard from '../components/HotdealBoard.tsx';
 import DealCard from '../components/DealCard.tsx';
-import {useGetDealsInfiniteQuery} from '../api/dealApi.ts';
+import {getCursorFromUrl, useLazyGetDealsQuery} from '../api/dealApi.ts';
 import Svg, {Circle, Polyline} from 'react-native-svg';
 
 const defaultDataWith6Colors = Array.from({length: 100}, (v, i) => i);
 
 const HomeScreen: React.FC = () => {
   const scrollOffsetValue = useSharedValue<number>(0);
-  const {
-    data,
-    refetch,
-    isFetching,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-  } = useGetDealsInfiniteQuery()
+  const [deals, setDeals] = useState<any[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [getDeals, {isFetching}] = useLazyGetDealsQuery();
 
-  //권장되는 방법
-  const deals = React.useMemo(
-    () => data?.pages.flatMap(page => page.results) ?? [],
-    [data]
-  );
+  const loadFirstPage = React.useCallback(async () => {
+    setDeals([]);
+    setNextCursor(null);
+    try {
+      const page = await getDeals(null).unwrap();
+      setDeals(page?.results ?? []);
+      setNextCursor(getCursorFromUrl(page?.next ?? null));
+    } catch (e) {
+      console.log(e);
+    }
+  }, [getDeals]);
+
+  const loadNextPage = React.useCallback(async () => {
+    if (!nextCursor || isFetching) return;
+    try {
+      const page = await getDeals(nextCursor).unwrap();
+      setDeals(prev => [...prev, ...(page?.results ?? [])]);
+      setNextCursor(getCursorFromUrl(page?.next ?? null));
+    } catch (e) {
+      console.log(e);
+    }
+  }, [getDeals, isFetching, nextCursor]);
+
+  React.useEffect(() => {
+    void loadFirstPage();
+  }, [loadFirstPage]);
+
   const [showFAB, setShowFAB] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const scrollUp = () => {
@@ -100,23 +115,25 @@ const HomeScreen: React.FC = () => {
         )}
         keyExtractor={(item: any, index) => item.article_id}
         onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
+          if (nextCursor && !isFetching) {
+            void loadNextPage();
           }
         }}
         // 2) 리스트 길이의 50% 지점에서 onEndReached 트리거
         onEndReachedThreshold={0.5}
         // 3) 로딩 인디케이터 및 "끝" 메시지 표시
         ListFooterComponent={
-          isFetchingNextPage ? (
+          isFetching && deals.length > 0 ? (
             <></>
-          ) : !hasNextPage ? (
+          ) : !nextCursor ? (
             <Text style={{textAlign: 'center', padding: 10}}>
               마지막 데이터입니다.
             </Text>
           ) : null
         }
-        onRefresh={() => refetch()}
+        onRefresh={() => {
+          void loadFirstPage();
+        }}
         refreshing={isFetching}></FlatList>
       {showFAB &&
         <TouchableOpacity style={styles.fab} onPress={scrollUp}>
@@ -132,9 +149,9 @@ const HomeScreen: React.FC = () => {
               points="8 14 12 10 16 14"
               fill="none"
               stroke="#ffffff"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </Svg>
         </TouchableOpacity>

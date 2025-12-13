@@ -11,7 +11,7 @@ import {
   BackHandler,
 } from 'react-native';
 import PostDetail from '../components/PostDetail.tsx';
-import RichTextEditor from '../../specs/RichTextEditorNativeComponent.ts';
+import RichTextEditor from '../../specs/RichTextEditorNativeComponent';
 import {useAddPostMutation, useGetPostsQuery} from '../api/postApi.ts';
 import {formatKoreanDate} from '../utils/dateFormat.ts';
 import {useSelector} from 'react-redux';

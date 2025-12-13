@@ -1,9 +1,21 @@
 import {createApi} from '@reduxjs/toolkit/query/react';
 import {baseQueryWithReauth} from './postApi.ts';
 
-interface Deal {
+export interface Deal {
   post_type: string;
   id: string | number;
+}
+
+export interface DealsPage {
+  next: string | null;
+  previous: string | null;
+  results: Deal[];
+}
+
+export function getCursorFromUrl(url: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/[?&]cursor=([^&]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
 }
 
 export const dealApiSlice = createApi({
@@ -11,25 +23,11 @@ export const dealApiSlice = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Deal'],
   endpoints: builder => ({
-    getDeals: builder.infiniteQuery<
-      {next: string | null; previous: string | null; results: Deal[]},
-      void,
-      string | null
-    >({
-      infiniteQueryOptions: {
-        // 첫 호출 시 사용할 기본 커서 값
-        initialPageParam: '',
-        // 마지막 호출 결과에서 다음 커서를 계산하는 함수
-        getNextPageParam: (lastPage) => {
-          if (!lastPage.next) return undefined;
-          const match = lastPage.next.match(/[?&]cursor=([^&]+)/);
-          return match ? decodeURIComponent(match[1]) : null;
-        },
+    getDeals: builder.query<DealsPage, string | null | void>({
+      query: cursor => {
+        const queryString = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+        return `deals/${queryString}`;
       },
-      query: ({ queryArg, pageParam }) => ({
-        url: `/deals/?cursor=${pageParam}`,
-        params: pageParam ? { cursor: pageParam } : {},
-      }),
     }),
     getDeal: builder.query<Deal, string | number>({
       query: id => `deals/${id}/`,
@@ -38,5 +36,5 @@ export const dealApiSlice = createApi({
   }),
 });
 
-export const {useGetDealsInfiniteQuery, useGetDealQuery} =
+export const {useGetDealsQuery, useLazyGetDealsQuery, useGetDealQuery} =
   dealApiSlice;

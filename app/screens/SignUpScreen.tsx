@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Button, TouchableOpacity } from 'react-native';
-import NativeKakaoLogin from '../../specs/NativeKakaoLogin.ts';
+import NativeKakaoLogin from '../../specs/NativeKakaoLogin';
 import { useKakaoSignupMutation} from '../api/auth/authApi.ts';
 import {setCredentials} from '../store/authSlice.ts';
 import {useDispatch, useSelector} from 'react-redux';
