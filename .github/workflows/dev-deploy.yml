@@ -24,7 +24,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 20.19.4
           cache: npm
 
       - name: Set up JDK
@@ -42,8 +42,8 @@ jobs:
           yes | sdkmanager --licenses
           sdkmanager \
             "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0" \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
             "ndk;27.1.12297006"
 
       - name: Setup Gradle cache
@@ -64,8 +64,6 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
         run: |
-          # Some projects hardcode node path in Gradle; force it to point to setup-node.
-          sudo ln -sf "$(command -v node)" /usr/local/bin/node
           cd android
           chmod +x ./gradlew
           ./gradlew :app:assembleRelease --no-daemon --max-workers=2
@@ -89,8 +87,8 @@ jobs:
           retention-days: 180
 
       - name: Publish to GitHub Release (dev-latest)
-#        env:
-#          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="dev-latest"
           if gh release view "$TAG" >/dev/null 2>&1; then
@@ -103,10 +101,3 @@ jobs:
               --target "${GITHUB_SHA}"
           fi
           gh release upload "$TAG" getapp.apk --clobber
-
-      # 태그 푸시일 때만 릴리스 생성/업로드
-      - name: Publish GitHub Release asset
-#        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/apk/getapp.apk
