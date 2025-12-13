@@ -7,7 +7,7 @@ import AuthStack from './AuthStack';
 import MainTabNavigator from './MainTabNavigator';
 
 // 예시로, 로그인이 되어 있는지 여부를 전역 컨텍스트나 Redux, Recoil 등에서 가져옴
-import {SafeAreaView} from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const Stack = createNativeStackNavigator();
 

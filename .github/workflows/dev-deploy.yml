@@ -71,7 +71,8 @@ jobs:
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew :app:assembleRelease --no-daemon --max-workers=2
+          ./gradlew :app:assembleRelease
+#          ./gradlew :app:assembleRelease --no-daemon --max-workers=2
 
       - name: Prepare getapp.apk
         run: |
