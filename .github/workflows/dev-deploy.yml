@@ -71,7 +71,10 @@ jobs:
         run: |
           cd android
           chmod +x ./gradlew
-          ./gradlew :app:assembleRelease
+          ./gradlew :app:assembleRelease \
+          --build-cache \
+          --configuration-cache \
+          --configuration-cache-problems=warn
 #          ./gradlew :app:assembleRelease --no-daemon --max-workers=2
 
       - name: Prepare getapp.apk
